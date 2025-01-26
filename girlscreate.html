@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GirlsCreate</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #ffe4e1; /* Light pink background */
+    }
+
+    #ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #ui.hidden {
+      display: none;
+    }
+
+    #blockList {
+      position: fixed;
+      top: 10px;
+      left: 120px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .block-item {
+      margin: 5px;
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .block-item:hover {
+      background-color: #f0f8ff;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <h3>Game Controls</h3>
+    <p>Middle click to cycle through blocks. Left click to remove a block. Right click to place a block. Use arrow keys to move the player.</p>
+    <button id="resetButton">Reset World</button>
+    <button id="resetPlayerButton">Reset Player</button>
+    <button id="saveButton">Save World as TXT</button>
+    <button onclick="saveWorld()">Save World as JSON</button>
+  </div>
+
+  <div id="blockList"></div>
+  <canvas id="gameCanvas"></canvas>
+  <input type="file" id="importFile" style="display: none;" accept=".json" onchange="handleFileUpload(event)" />
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const blockSize = 50;
+    const world = [];
+    const blockTypes = [
+      { name: "Pink Flower", color: "#ff69b4" },
+      { name: "Lavender", color: "#e6e6fa" },
+      { name: "Cotton Candy", color: "#ffccff" },
+      { name: "Soft Wood", color: "#f4a300" },
+      { name: "Peach", color: "#ffdab9" },
+      { name: "Cloud", color: "#f0f8ff" },
+      { name: "Sugar", color: "#fffafa" },
+      { name: "Pastel Rainbow", color: "#d3c0eb" },
+      { name: "Rose", color: "#ff1493" },
+      { name: "Candy", color: "#ff6347" }
+    ];
+
+    let currentBlockType = 0;
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      width: blockSize,
+      height: blockSize,
+      color: "#FFDF00",
+      speed: 5,
+      gameMode: "Survival"
+    };
+
+    const ui = document.getElementById("ui");
+    const blockList = document.getElementById("blockList");
+
+    let playerVisible = true;
+
+    const mobs = [];
+    const bunnyImage = new Image();
+    bunnyImage.src = "https://www.freepngimg.com/thumb/bunny/7-2-bunny-transparent-background.png"; 
+
+    const butterflyImage = new Image();
+    butterflyImage.src = "https://img.freepik.com/free-psd/monarch-butterfly-vibrant-symbol-transformation_632498-24128.jpg?semt=ais_hybrid"; 
+
+    function Mob(type, x, y) {
+      this.type = type;
+      this.x = x;
+      this.y = y;
+      this.size = 50;
+      this.speedX = Math.random() * 2 - 1;
+      this.speedY = Math.random() * 2 - 1;
+    }
+
+    function createMobs() {
+      for (let i = 0; i < 5; i++) {
+        let mobType = Math.random() < 0.5 ? "bunny" : "butterfly";
+        mobs.push(new Mob(mobType, Math.random() * canvas.width, Math.random() * canvas.height));
+      }
+    }
+
+    function drawMobs() {
+      mobs.forEach(mob => {
+        if (mob.type === "bunny") {
+          ctx.drawImage(bunnyImage, mob.x, mob.y, mob.size, mob.size);
+        } else if (mob.type === "butterfly") {
+          ctx.drawImage(butterflyImage, mob.x, mob.y, mob.size, mob.size);
+        }
+        mob.x += mob.speedX;
+        mob.y += mob.speedY;
+
+        if (mob.x < 0 || mob.x > canvas.width) mob.speedX = -mob.speedX;
+        if (mob.y < 0 || mob.y > canvas.height) mob.speedY = -mob.speedY;
+      });
+    }
+
+    function generateWorld() {
+      world.length = 0;
+      for (let x = 0; x < canvas.width / blockSize; x++) {
+        for (let y = 0; y < canvas.height / blockSize; y++) {
+          if (y > canvas.height / blockSize - 3) {
+            world.push({ x: x * blockSize, y: y * blockSize, color: "#ffccff" });
+          } else if (y === canvas.height / blockSize - 3) {
+            world.push({ x: x * blockSize, y: y * blockSize, color: "#ff69b4" });
+          }
+        }
+      }
+    }
+
+    function drawWorld() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      world.forEach(block => {
+        ctx.fillStyle = block.color;
+        ctx.fillRect(block.x, block.y, blockSize, blockSize);
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(block.x, block.y, blockSize, blockSize);
+      });
+
+      if (playerVisible) drawPlayer();
+      drawMobs();
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function handleMouseClick(event) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      if (event.button === 0) { // Left click to remove blocks
+        for (let i = 0; i < world.length; i++) {
+          if (
+            mouseX >= world[i].x &&
+            mouseX < world[i].x + blockSize &&
+            mouseY >= world[i].y &&
+            mouseY < world[i].y + blockSize
+          ) {
+            world.splice(i, 1);
+            break;
+          }
+        }
+      }
+      drawWorld(); // Refresh the world after a block is removed
+    }
+
+    function handleMiddleClick(event) {
+      if (event.button === 1) {
+        event.preventDefault();
+        currentBlockType = (currentBlockType + 1) % blockTypes.length;
+        console.log(`Current block: ${blockTypes[currentBlockType].name}`);
+      }
+    }
+
+    function handleRightClick(event) {
+      event.preventDefault(); // Prevent the default context menu
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      const gridX = Math.floor(mouseX / blockSize) * blockSize;
+      const gridY = Math.floor(mouseY / blockSize) * blockSize;
+
+      if (!world.some(block => block.x === gridX && block.y === gridY)) {
+        world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color });
+      }
+      drawWorld();
+    }
+
+    function handleKeyPress(event) {
+      switch (event.key) {
+        case "ArrowUp":
+          player.y = Math.max(0, player.y - player.speed);
+          break;
+        case "ArrowDown":
+          player.y = Math.min(canvas.height - player.height, player.y + player.speed);
+          break;
+        case "ArrowLeft":
+          player.x = Math.max(0, player.x - player.speed);
+          break;
+        case "ArrowRight":
+          player.x = Math.min(canvas.width - player.width, player.x + player.speed);
+          break;
+        case "f":
+          ui.classList.toggle("hidden");
+          break;
+        case "g":
+          playerVisible = !playerVisible;
+          break;
+        case "c":
+          toggleBlockList();
+          break;
+        case "z":
+          saveWorldAsTxt();
+          break;
+        case "b":
+          document.getElementById("importFile").click();
+          break;
+      }
+      drawWorld();
+    }
+
+    function toggleBlockList() {
+      blockList.style.display = blockList.style.display === "none" ? "block" : "none";
+      if (blockList.style.display === "block") {
+        blockList.innerHTML = "";
+        blockTypes.forEach((block, index) => {
+          const blockElement = document.createElement("div");
+          blockElement.className = "block-item";
+          blockElement.innerHTML = block.name;
+          blockElement.style.backgroundColor = block.color;
+          blockElement.addEventListener("click", () => {
+            currentBlockType = index;
+            console.log(`Selected block: ${block.name}`);
+          });
+          blockList.appendChild(blockElement);
+        });
+      }
+    }
+
+    function saveWorldAsTxt() {
+      let worldData = world.map(block => `${block.x},${block.y},${block.color}`).join("\n");
+      const blob = new Blob([worldData], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "world.txt";
+      link.click();
+    }
+
+    canvas.addEventListener("click", handleMouseClick); // Left click to remove blocks
+    canvas.addEventListener("mousedown", handleMiddleClick); // Middle click to cycle blocks
+    canvas.addEventListener("contextmenu", handleRightClick); // Right-click event listener
+    window.addEventListener("keydown", handleKeyPress);
+
+    generateWorld();
+    createMobs();
+    drawWorld();
+  </script>
+</body>
+</html>
