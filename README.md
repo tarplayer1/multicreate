@@ -31,7 +31,7 @@ Multicreate is a 2D world-building game where players can create, modify, and sa
 ## How to Run
 
 1. Clone or download the repository to your local machine.
-2. Open the `index.html` file in your web browser.
+2. Open the `multicreate.html` file in your web browser.
 
 Alternatively, you can deploy the game on GitHub Pages for online access:
 - Push your project to a GitHub repository.
@@ -40,8 +40,6 @@ Alternatively, you can deploy the game on GitHub Pages for online access:
 ## Technologies Used
 
 - **HTML5** for structure.
-- **CSS3** for styling.
-- **JavaScript** for functionality, including world generation, block placement/removal, and save/load functionality.
 
 ## Future Improvements
 
@@ -50,11 +48,9 @@ Alternatively, you can deploy the game on GitHub Pages for online access:
 - Enhance the save/load system with user authentication for saving personal worlds.
 - Implement achievements and world events for more dynamic gameplay.
 - Add environmental interactions such as planting trees or interacting with animals.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+  
+## versions
+there are diffrent versions like girlscreate im making=D
 ## Acknowledgments
 
 - Thanks to all open-source libraries and contributors that made this project possible.
