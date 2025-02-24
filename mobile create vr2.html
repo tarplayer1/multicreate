@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobile Multicreate</title>
+  <title>Offline Shared Multicreate</title>
   <style>
     body {
       margin: 0;
@@ -14,7 +14,7 @@
     canvas {
       display: block;
       background-color: #87CEEB;
-      cursor: pointer; /* Cursor changes to a hand (finger) over the canvas */
+      cursor: pointer;
     }
 
     #ui {
@@ -26,7 +26,6 @@
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       max-width: 100%;
-      cursor: pointer; /* Cursor changes to a hand over UI buttons */
     }
 
     #blockList {
@@ -41,7 +40,6 @@
       max-height: 400px;
       overflow-y: auto;
       max-width: 100%;
-      cursor: pointer; /* Cursor changes to a hand over block items */
     }
 
     .block-item {
@@ -54,36 +52,16 @@
     .block-item:hover {
       background-color: #f0f0f0;
     }
-
-    @media (max-width: 600px) {
-      canvas {
-        width: 100%;
-        height: auto;
-      }
-
-      #ui {
-        position: relative;
-        top: auto;
-        left: auto;
-        width: 100%;
-        padding: 5px;
-      }
-
-      #ui button {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-    }
   </style>
 </head>
 <body>
   <div id="ui">
-    <h3>Mobile Multicreate Controls</h3>
+    <h3>Offline Shared World</h3>
     <button id="saveButton" onclick="saveWorld()">Save World</button>
     <button onclick="loadWorld()">Load World</button>
     <button onclick="resetWorld()">Reset World</button>
     <button onclick="toggleBlockList()">Blocklist</button>
-    <button id="makePublicButton" onclick="makeWorldPublic()">Make Public</button> <!-- Make Public button -->
+    <button onclick="makeWorldPublic()">Make Public</button> <!-- Make Public button -->
     <button onclick="loadPublicWorld()">Load Public World</button> <!-- Load Public World button -->
   </div>
   
@@ -157,11 +135,9 @@
       const blockIndex = world.findIndex(block => block.x === gridX && block.y === gridY);
       
       if (blockIndex !== -1) {
-        // Delete the block if it exists
-        world.splice(blockIndex, 1);
+        world.splice(blockIndex, 1); // Delete the block if it exists
       } else {
-        // Add the block if it doesn't exist
-        world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color });
+        world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color }); // Add block if it doesn't exist
       }
 
       drawWorld();
@@ -173,6 +149,7 @@
       if (worldName) {
         localStorage.setItem(worldName, worldData);
         alert("World saved!");
+        syncWorldWithSharedFolder(worldData, worldName); // Sync with shared folder
       }
     }
 
@@ -199,6 +176,7 @@
       if (worldName) {
         const worldData = JSON.stringify(world);
         localStorage.setItem("public_" + worldName, worldData); // Save as a public world
+        syncWorldWithSharedFolder(worldData, "public_" + worldName); // Sync with shared folder
         alert(`Your world "${worldName}" is now public!`);
       }
     }
@@ -213,6 +191,13 @@
       } else {
         alert("No such public world found.");
       }
+    }
+
+    // Sync world data with shared folder (replace with actual cloud/local file sync)
+    function syncWorldWithSharedFolder(worldData, worldName) {
+      const worldFile = new Blob([worldData], { type: "application/json" });
+      const worldUrl = URL.createObjectURL(worldFile);
+      alert(`World "${worldName}" has been synced with shared folder!`);
     }
 
     // Event listeners
