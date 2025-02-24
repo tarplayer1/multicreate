@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Multicreate</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      background-color: #87CEEB;
+      cursor: pointer; /* Cursor changes to a hand (finger) over the canvas */
+    }
+
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 100%;
+      cursor: pointer; /* Cursor changes to a hand over UI buttons */
+    }
+
+    #blockList {
+      position: absolute;
+      top: 100px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      max-height: 400px;
+      overflow-y: auto;
+      max-width: 100%;
+      cursor: pointer; /* Cursor changes to a hand over block items */
+    }
+
+    .block-item {
+      padding: 5px;
+      cursor: pointer;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+
+    .block-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    @media (max-width: 600px) {
+      canvas {
+        width: 100%;
+        height: auto;
+      }
+
+      #ui {
+        position: relative;
+        top: auto;
+        left: auto;
+        width: 100%;
+        padding: 5px;
+      }
+
+      #ui button {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <h3>Mobile Multicreate Controls</h3>
+    <button id="saveButton" onclick="saveWorld()">Save World</button>
+    <button onclick="loadWorld()">Load World</button>
+    <button onclick="resetWorld()">Reset World</button>
+    <button onclick="resetGame()">!reset!</button>
+    <button onclick="toggleBlockList()">Blocklist</button>
+  </div>
+  
+  <div id="blockList"></div>
+  <canvas id="gameCanvas"></canvas>
+  
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const blockSize = 50;
+    let world = [];
+    const blockTypes = [
+      { name: "Grass", color: "#228B22" },
+      { name: "Dirt", color: "#8B4513" },
+      { name: "Stone", color: "#808080" },
+      { name: "Sand", color: "#FFD700" },
+      { name: "Wood", color: "#A0522D" }
+    ];
+    let currentBlockType = 0;
+
+    const blockList = document.getElementById("blockList");
+
+    function generateWorld() {
+      world = [];
+      for (let x = 0; x < canvas.width / blockSize; x++) {
+        world.push({ x: x * blockSize, y: canvas.height - blockSize, color: "#8B4513" });
+      }
+    }
+
+    function drawWorld() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      world.forEach(block => {
+        ctx.fillStyle = block.color;
+        ctx.fillRect(block.x, block.y, blockSize, blockSize);
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(block.x, block.y, blockSize, blockSize);
+      });
+    }
+
+    function toggleBlockList() {
+      blockList.style.display = blockList.style.display === "none" ? "block" : "none";
+      if (blockList.style.display === "block") {
+        blockList.innerHTML = "";
+        blockTypes.forEach((block, index) => {
+          const blockElement = document.createElement("div");
+          blockElement.classList.add("block-item");
+          blockElement.style.backgroundColor = block.color;
+          blockElement.innerText = block.name;
+          blockElement.onclick = () => {
+            currentBlockType = index;
+            blockList.style.display = "none";
+          };
+          blockList.appendChild(blockElement);
+        });
+      }
+    }
+
+    function handleTouchAndClick(event) {
+      event.preventDefault();
+      const touch = event.touches ? event.touches[0] : event;
+      const touchX = touch.clientX;
+      const touchY = touch.clientY;
+      
+      const rect = canvas.getBoundingClientRect();
+      const gridX = Math.floor((touchX - rect.left) / blockSize) * blockSize;
+      const gridY = Math.floor((touchY - rect.top) / blockSize) * blockSize;
+
+      const blockIndex = world.findIndex(block => block.x === gridX && block.y === gridY);
+      
+      if (blockIndex !== -1) {
+        // Delete the block if it exists
+        world.splice(blockIndex, 1);
+      } else {
+        // Add the block if it doesn't exist
+        world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color });
+      }
+
+      drawWorld();
+    }
+
+    function saveWorld() {
+      const worldData = JSON.stringify(world);
+      const worldName = prompt("Enter a name for the world:");
+      if (worldName) {
+        localStorage.setItem(worldName, worldData);
+        alert("World saved!");
+      }
+    }
+
+    function loadWorld() {
+      const worldName = prompt("Enter the world name to load:");
+      const savedWorld = localStorage.getItem(worldName);
+      if (savedWorld) {
+        world = JSON.parse(savedWorld);
+        drawWorld();
+        alert("World loaded!");
+      } else {
+        alert("No saved world found.");
+      }
+    }
+
+    function resetWorld() {
+      generateWorld();
+      drawWorld();
+      alert("World has been reset!");
+    }
+
+    function resetGame() {
+      const confirmReset = confirm("Are you sure you want to reset your game?");
+      if (confirmReset) {
+        localStorage.clear();
+        world = [];
+        generateWorld();
+        drawWorld();
+        alert("Game has been reset!");
+      }
+    }
+
+    window.addEventListener("touchstart", handleTouchAndClick);
+    window.addEventListener("click", handleTouchAndClick);
+
+    generateWorld();
+    drawWorld();
+  </script>
+</body>
+</html>
