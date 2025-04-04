@@ -1,4 +1,10 @@
-#INDEX.HTML is the tutorial update=D just telling you
+# note this is the old multicreate to get the newest and better multicreate go to https://github.com/tarplayer1/multicreate- owned by tarex studios (thats my branding)
+
+
+
+
+
+
 # Multicreate
 
 Multicreate is a 2D world-building game where players can create, modify, and save their own worlds using various block types. This game features block manipulation, player movement, and a save/load system, allowing players to save their creations in JSON or TXT formats.
@@ -55,4 +61,3 @@ there are diffrent versions like girlscreate im making=D
 ## Acknowledgments
 
 - Thanks to all open-source libraries and contributors that made this project possible.
-
